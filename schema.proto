@@ -1,0 +1,125 @@
+syntax = "proto3";
+package schema;
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message GetUserRequest {
+  string userId = 1;
+}
+
+message GetUserResponse {
+  User user = 1;
+}
+
+message GetUsersRequest {
+}
+
+message GetUsersResponse {
+  repeated User users = 1;
+}
+
+message AddUserRequest {
+  string name = 1;
+  string email = 2;
+}
+
+message AddUserResponse {
+  User user = 1;
+}
+
+// Définition du service de gestion des utilisateurs
+service UserService {
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+  rpc AddUser(AddUserRequest) returns (AddUserResponse);
+}
+
+
+// Définition du message Task
+message Task {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  bool completed = 4;
+  repeated string assignedTo = 5;
+}
+
+// Définition des messages de requête et de réponse pour les méthodes
+message GetTaskRequest {
+  string taskId = 1;
+}
+
+message GetTaskResponse {
+  Task task = 1;
+}
+
+message GetTasksRequest {
+  // Ajoutez des champs pour les filtres de recherche des tâches si nécessaire
+}
+
+message GetTasksResponse {
+  repeated Task tasks = 1;
+}
+
+message AddTaskRequest {
+  string title = 1;
+  string description = 2;
+  bool completed = 3;
+  repeated string assignedTo = 4;
+}
+
+message AddTaskResponse {
+  Task task = 1;
+}
+
+message CompleteTaskRequest {
+  string taskId = 1;
+}
+
+message CompleteTaskResponse {
+  Task task = 1;
+}
+
+// // Définition du service de gestion des tâches
+service TaskService {
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
+  rpc AddTask(AddTaskRequest) returns (AddTaskResponse);
+  rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse);
+}
+
+
+
+// Définition du message Notification
+message Notification {
+  string id = 1;
+  string message = 2;
+  bool seen = 3;
+  string userId = 4;
+}
+
+// Définition des messages de requête et de réponse pour les méthodes
+message GetNotificationRequest {
+  string notificationId = 1;
+}
+
+message GetNotificationResponse {
+  Notification notification = 1;
+}
+
+message GetNotificationsRequest {
+}
+
+message GetNotificationsResponse {
+  repeated Notification notifications = 1;
+}
+
+// Définition du service de gestion des notifications
+service NotificationService {
+  rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse);
+  rpc GetNotifications(GetNotificationsRequest) returns (GetNotificationsResponse);
+}
