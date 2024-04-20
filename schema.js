@@ -7,7 +7,6 @@ const typeDefs = gql`
     title: String!
     description: String!
     completed: Boolean!
-    assignedTo: [ID]!
   }
 
   type User {

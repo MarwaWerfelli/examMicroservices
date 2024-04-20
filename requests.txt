@@ -1,0 +1,28 @@
+mutation {
+  addTask(
+    title: "Nouvelle tâche"
+    description: "Description de la nouvelle tâche"
+    completed: false
+    assignedTo: ["54759eb3c090d83494e2d804"]
+  ) {
+    id
+    title
+    description
+    completed
+
+  }
+}
+
+query {
+  tasks {
+    id
+    title
+    description
+    completed
+    assignedTo {
+      id
+      name
+      email
+    }
+  }
+}

@@ -1,5 +1,9 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
+const mongoose = require("mongoose");
+
+// Charger le modèle de tâche défini avec Mongoose
+const Task = require("./models/Task");
 
 // Charger le fichier schema.proto
 const taskProtoPath = "schema.proto";
@@ -12,63 +16,79 @@ const taskProtoDefinition = protoLoader.loadSync(taskProtoPath, {
 });
 const taskProto = grpc.loadPackageDefinition(taskProtoDefinition).schema;
 
+// Connecter à la base de données MongoDB avec Mongoose
+mongoose.connect("mongodb://localhost:27017/taskdb", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+// Vérifier la connexion à la base de données
+const db = mongoose.connection;
+console.log({ db });
+db.on(
+  "error",
+  console.error.bind(console, "Erreur de connexion à la base de données :")
+);
+db.once("open", () => {
+  console.log("Connecté à la base de données MongoDB.");
+});
+
 // Implémenter le service de gestion des tâches
 const taskService = {
-  getTask: (call, callback) => {
-    // Récupérer les détails de la tâche à partir de la base de données
-    const task = {
-      id: call.request.taskId,
-      title: "Exemple de tâche",
-      description: "Ceci est un exemple de tâche.",
-      completed: false,
-      assignedTo: [],
-      // Ajouter d'autres champs de données pour la tâche au besoin
-    };
-    callback(null, { task });
+  getTask: async (call, callback) => {
+    // Récupérer les détails de la tâche à partir de la base de données MongoDB
+    Task.findById(call.request.taskId, (err, task) => {
+      if (err) {
+        callback(err);
+      } else {
+        callback(null, { task });
+      }
+    });
   },
-  getTasks: (call) => {
-    // Récupérer toutes les tâches à partir de la base de données
-    const tasks = [
-      {
-        id: "1",
-        title: "Exemple de tâche 1",
-        description: "Ceci est le premier exemple de tâche.",
-        completed: false,
-        assignedTo: [],
-      },
-      {
-        id: "2",
-        title: "Exemple de tâche 2",
-        description: "Ceci est le deuxième exemple de tâche.",
-        completed: false,
-        assignedTo: [],
-      },
-      // Ajouter d'autres tâches au besoin
-    ];
-    tasks.forEach((task) => call.write({ task }));
-    call.end();
+  getTasks: async (call) => {
+    try {
+      // Récupérer toutes les tâches à partir de la base de données MongoDB
+      const tasks = await Task.find();
+      console.log(tasks);
+      return tasks;
+      tasks.forEach((task) => call.write({ task }));
+
+      // call.end();
+      return tasks;
+    } catch (err) {
+      call.emit("error", err);
+    }
   },
   addTask: (call, callback) => {
-    // Ajouter une nouvelle tâche à la base de données
-    const task = {
-      id: "3", // ID de la nouvelle tâche
+    // Ajouter une nouvelle tâche à la base de données MongoDB
+    const newTask = new Task({
       title: call.request.title,
       description: call.request.description,
       completed: call.request.completed,
       assignedTo: call.request.assignedTo,
-    };
-    callback(null, { task });
+    });
+
+    try {
+      newTask.save();
+      return callback(null, { newTask });
+    } catch (error) {
+      return callback(null, {});
+    }
   },
   completeTask: (call, callback) => {
-    // Marquer la tâche comme terminée dans la base de données
-    const task = {
-      id: call.request.taskId,
-      title: "Exemple de tâche",
-      description: "Ceci est un exemple de tâche.",
-      completed: true,
-      assignedTo: [],
-    };
-    callback(null, { task });
+    // Marquer la tâche comme terminée dans la base de données MongoDB
+    Task.findByIdAndUpdate(
+      call.request.taskId,
+      { completed: true },
+      { new: true }, // Pour renvoyer la tâche mise à jour
+      (err, task) => {
+        if (err) {
+          callback(err);
+        } else {
+          callback(null, { task });
+        }
+      }
+    );
   },
 };
 

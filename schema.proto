@@ -45,7 +45,7 @@ message Task {
   string title = 2;
   string description = 3;
   bool completed = 4;
-  repeated string assignedTo = 5;
+   repeated User assignedTo = 5;
 }
 
 // Définition des messages de requête et de réponse pour les méthodes
@@ -84,10 +84,13 @@ message CompleteTaskResponse {
   Task task = 1;
 }
 
+message Empty {
+
+}
 // // Définition du service de gestion des tâches
 service TaskService {
   rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
-  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
+  rpc GetTasks(Empty) returns (GetTasksResponse);
   rpc AddTask(AddTaskRequest) returns (AddTaskResponse);
   rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse);
 }

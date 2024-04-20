@@ -54,6 +54,7 @@ const server = new ApolloServer({ typeDefs, resolvers });
 server.start().then(() => {
   app.use(cors(), bodyParser.json(), expressMiddleware(server));
 });
+
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({ extended: true }));
 // taskProto Endpoints
@@ -93,7 +94,12 @@ app.post("/tasks", (req, res) => {
     grpc.credentials.createInsecure()
   );
   client.addTask(
-    { title, description, completed, assignedTo },
+    {
+      title,
+      description,
+      completed,
+      assignedTo,
+    },
     (err, response) => {
       if (err) {
         res.status(500).send(err);

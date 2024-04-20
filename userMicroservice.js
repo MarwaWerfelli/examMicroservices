@@ -1,5 +1,8 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
+const User = require("./models/User");
+const { log } = require("@grpc/grpc-js/build/src/logging");
+const { default: mongoose } = require("mongoose");
 
 // Charger le fichier schema.protoo
 const userProtoPath = "schema.proto";
@@ -12,6 +15,22 @@ const userProtoDefinition = protoLoader.loadSync(userProtoPath, {
 });
 const userProto = grpc.loadPackageDefinition(userProtoDefinition).schema;
 
+// Connecter à la base de données MongoDB avec Mongoose
+mongoose.connect("mongodb://localhost:27017/taskdb", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+// Vérifier la connexion à la base de données
+const db = mongoose.connection;
+console.log({ db });
+db.on(
+  "error",
+  console.error.bind(console, "Erreur de connexion à la base de données :")
+);
+db.once("open", () => {
+  console.log("Connecté à la base de données MongoDB.");
+});
 // Implémenter le service de gestion des utilisateurs
 const userService = {
   getUser: (call, callback) => {
@@ -24,32 +43,29 @@ const userService = {
     };
     callback(null, { user });
   },
-  getUsers: (call) => {
+  getUsers: async (call) => {
     // Récupérer tous les utilisateurs à partir de la base de données
-    const users = [
-      {
-        id: "1",
-        name: "Utilisateur 1",
-        email: "utilisateur1@example.com",
-      },
-      {
-        id: "2",
-        name: "Utilisateur 2",
-        email: "utilisateur2@example.com",
-      },
-      // Ajouter d'autres utilisateurs au besoin
-    ];
-    users.forEach((user) => call.write({ user }));
-    call.end();
+    try {
+      // Récupérer tous les utilisateurs à partir de la base de données MongoDB
+      const users = await User.find({});
+      users.forEach((user) => call.write({ user: JSON.stringify(user) }));
+      call.end();
+    } catch (err) {
+      call.emit("error", err);
+    }
   },
-  addUser: (call, callback) => {
-    // Ajouter un nouvel utilisateur à la base de données
-    const user = {
-      id: "3",
+  addUser: async (call, callback) => {
+    const newUser = new User({
       name: call.request.name,
       email: call.request.email,
-    };
-    callback(null, { user });
+    });
+
+    try {
+      newUser.save();
+      return callback(null, { newUser });
+    } catch (error) {
+      return callback(null, {});
+    }
   },
 };
 

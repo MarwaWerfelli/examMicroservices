@@ -50,7 +50,7 @@ const resolvers = {
         grpc.credentials.createInsecure()
       );
       return new Promise((resolve, reject) => {
-        const call = client.getTasks({});
+        const call = client.getTasks();
         const tasks = [];
         call.on("data", (data) => {
           tasks.push(data.task);
@@ -109,7 +109,12 @@ const resolvers = {
       );
       return new Promise((resolve, reject) => {
         client.addTask(
-          { title, description, completed, assignedTo },
+          {
+            title,
+            description,
+            completed,
+            assignedTo,
+          },
           (err, response) => {
             if (err) {
               reject(err);
