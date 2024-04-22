@@ -90,7 +90,7 @@ message Empty {
 // // Définition du service de gestion des tâches
 service TaskService {
   rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
-  rpc GetTasks(Empty) returns (GetTasksResponse);
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse);
   rpc AddTask(AddTaskRequest) returns (AddTaskResponse);
   rpc CompleteTask(CompleteTaskRequest) returns (CompleteTaskResponse);
 }

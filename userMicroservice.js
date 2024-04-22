@@ -2,7 +2,6 @@ const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
 const User = require("./models/User");
 const { log } = require("@grpc/grpc-js/build/src/logging");
-const { default: mongoose } = require("mongoose");
 
 // Charger le fichier schema.protoo
 const userProtoPath = "schema.proto";
@@ -15,22 +14,6 @@ const userProtoDefinition = protoLoader.loadSync(userProtoPath, {
 });
 const userProto = grpc.loadPackageDefinition(userProtoDefinition).schema;
 
-// Connecter à la base de données MongoDB avec Mongoose
-mongoose.connect("mongodb://localhost:27017/taskdb", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-// Vérifier la connexion à la base de données
-const db = mongoose.connection;
-console.log({ db });
-db.on(
-  "error",
-  console.error.bind(console, "Erreur de connexion à la base de données :")
-);
-db.once("open", () => {
-  console.log("Connecté à la base de données MongoDB.");
-});
 // Implémenter le service de gestion des utilisateurs
 const userService = {
   getUser: (call, callback) => {
@@ -47,7 +30,9 @@ const userService = {
     // Récupérer tous les utilisateurs à partir de la base de données
     try {
       // Récupérer tous les utilisateurs à partir de la base de données MongoDB
-      const users = await User.find({});
+      const users = await User.find({})
+        .sort({ createdAt: -1 })
+        .limit(call.request.amount);
       users.forEach((user) => call.write({ user: JSON.stringify(user) }));
       call.end();
     } catch (err) {
@@ -58,11 +43,18 @@ const userService = {
     const newUser = new User({
       name: call.request.name,
       email: call.request.email,
+      createdAt: new Date().toISOString(),
+      thumbsUp: 0,
+      thumbsDown: 0,
     });
 
     try {
-      newUser.save();
-      return callback(null, { newUser });
+      const res = await newUser.save();
+      return {
+        id: res.id,
+        ...res._doc,
+      };
+      //return callback(null, { newUser });
     } catch (error) {
       return callback(null, {});
     }

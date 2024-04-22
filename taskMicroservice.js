@@ -1,6 +1,5 @@
 const grpc = require("@grpc/grpc-js");
 const protoLoader = require("@grpc/proto-loader");
-const mongoose = require("mongoose");
 
 // Charger le modèle de tâche défini avec Mongoose
 const Task = require("./models/Task");
@@ -16,28 +15,11 @@ const taskProtoDefinition = protoLoader.loadSync(taskProtoPath, {
 });
 const taskProto = grpc.loadPackageDefinition(taskProtoDefinition).schema;
 
-// Connecter à la base de données MongoDB avec Mongoose
-mongoose.connect("mongodb://localhost:27017/taskdb", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-// Vérifier la connexion à la base de données
-const db = mongoose.connection;
-console.log({ db });
-db.on(
-  "error",
-  console.error.bind(console, "Erreur de connexion à la base de données :")
-);
-db.once("open", () => {
-  console.log("Connecté à la base de données MongoDB.");
-});
-
 // Implémenter le service de gestion des tâches
 const taskService = {
   getTask: async (call, callback) => {
     // Récupérer les détails de la tâche à partir de la base de données MongoDB
-    Task.findById(call.request.taskId, (err, task) => {
+    await Task.findById(call.request.taskId, (err, task) => {
       if (err) {
         callback(err);
       } else {
@@ -49,17 +31,13 @@ const taskService = {
     try {
       // Récupérer toutes les tâches à partir de la base de données MongoDB
       const tasks = await Task.find();
-      console.log(tasks);
-      return tasks;
       tasks.forEach((task) => call.write({ task }));
-
-      // call.end();
-      return tasks;
+      call.end();
     } catch (err) {
       call.emit("error", err);
     }
   },
-  addTask: (call, callback) => {
+  addTask: async (call, callback) => {
     // Ajouter une nouvelle tâche à la base de données MongoDB
     const newTask = new Task({
       title: call.request.title,
@@ -69,15 +47,15 @@ const taskService = {
     });
 
     try {
-      newTask.save();
+      await newTask.save();
       return callback(null, { newTask });
     } catch (error) {
       return callback(null, {});
     }
   },
-  completeTask: (call, callback) => {
+  completeTask: async (call, callback) => {
     // Marquer la tâche comme terminée dans la base de données MongoDB
-    Task.findByIdAndUpdate(
+    await Task.findByIdAndUpdate(
       call.request.taskId,
       { completed: true },
       { new: true }, // Pour renvoyer la tâche mise à jour

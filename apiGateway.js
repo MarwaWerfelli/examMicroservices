@@ -1,6 +1,9 @@
 // apiGateway.js
 const express = require("express");
 const { ApolloServer } = require("@apollo/server");
+const mongoose = require("mongoose");
+const MongoDB =
+  "mongodb+srv://marwawerfelli930:dRmjsuCOLUd7AMYn@cluster0.hlgiyhw.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const { expressMiddleware } = require("@apollo/server/express4");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -50,6 +53,15 @@ const notificationProto = grpc.loadPackageDefinition(
 // Créer une instance ApolloServer avec le schéma et les résolveurs importés
 const server = new ApolloServer({ typeDefs, resolvers });
 
+mongoose
+  .connect(MongoDB, { useNewUrlParser: true })
+  .then(() => {
+    console.log("MongoDB connection successful");
+    return server.listen({ port: 3000 });
+  })
+  .then((res) => {
+    console.log(`API Gateway en cours d'exécution sur le port ${res.url}`);
+  });
 // Appliquer le middleware ApolloServer à l'application Express
 server.start().then(() => {
   app.use(cors(), bodyParser.json(), expressMiddleware(server));
@@ -171,7 +183,7 @@ app.post("/sendNotification", (req, res) => {
   });
 });
 
-// Démarrer l'application Express
+//Démarrer l'application Express
 const port = 3000;
 app.listen(port, () => {
   console.log(`API Gateway en cours d'exécution sur le port ${port}`);

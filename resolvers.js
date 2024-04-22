@@ -27,14 +27,14 @@ const userProto = grpc.loadPackageDefinition(userProtoDefinition).schema;
 // Définir les résolveurs pour les requêtes GraphQL
 const resolvers = {
   Query: {
-    task: (_, { id }) => {
+    task: async (_, { ID }) => {
       // Effectuer un appel gRPC au microservice des tâches pour récupérer une tâche
       const client = new taskProto.TaskService(
         "localhost:50051",
         grpc.credentials.createInsecure()
       );
-      return new Promise((resolve, reject) => {
-        client.getTask({ taskId: id }, (err, response) => {
+      return await new Promise((resolve, reject) => {
+        client.getTask({ taskId: ID }, (err, response) => {
           if (err) {
             reject(err);
           } else {
@@ -63,14 +63,14 @@ const resolvers = {
         });
       });
     },
-    user: (_, { id }) => {
+    user: (_, { ID }) => {
       // Effectuer un appel gRPC au microservice des utilisateurs pour récupérer un utilisateur
       const client = new userProto.UserService(
         "localhost:50052",
         grpc.credentials.createInsecure()
       );
       return new Promise((resolve, reject) => {
-        client.getUser({ userId: id }, (err, response) => {
+        client.getUser({ userId: ID }, (err, response) => {
           if (err) {
             reject(err);
           } else {
@@ -125,14 +125,14 @@ const resolvers = {
         );
       });
     },
-    completeTask: (_, { id }) => {
+    completeTask: (_, { ID }) => {
       // Effectuer un appel gRPC au microservice des tâches pour marquer une tâche comme terminée
       const client = new taskProto.TaskService(
         "localhost:50051",
         grpc.credentials.createInsecure()
       );
       return new Promise((resolve, reject) => {
-        client.completeTask({ taskId: id }, (err, response) => {
+        client.completeTask({ taskId: ID }, (err, response) => {
           if (err) {
             reject(err);
           } else {
@@ -141,14 +141,14 @@ const resolvers = {
         });
       });
     },
-    addUser: (_, { name, email }) => {
+    addUser: (_, { userInput: { name, email } }) => {
       // Effectuer un appel gRPC au microservice des utilisateurs pour ajouter un nouvel utilisateur
       const client = new userProto.UserService(
         "localhost:50052",
         grpc.credentials.createInsecure()
       );
       return new Promise((resolve, reject) => {
-        client.addUser({ name, email }, (err, response) => {
+        client.addUser({ name: name, email: email }, (err, response) => {
           if (err) {
             reject(err);
           } else {
